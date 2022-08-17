@@ -12,6 +12,8 @@ namespace Bramus\Router;
  */
 class Router
 {
+    private $lastRoute = '';
+
     /**
      * @var array The route patterns and their handling functions
      */
@@ -46,6 +48,10 @@ class Router
      * @var string Default Controllers Namespace
      */
     private $namespace = '';
+
+    public function getLastRoute() {
+        return $this->lastRoute;
+    }
 
     /**
      * Store a before middleware route and a handling function to be executed when accessed using one of the specified methods.
@@ -289,12 +295,12 @@ class Router
 
         // If no route was handled, trigger the 404 (if any)
         if ($numHandled === 0) {
-            if (isset($this->afterRoutes[$this->requestedMethod])) {
-                $this->trigger404($this->afterRoutes[$this->requestedMethod]);
-            }
+            $this->trigger404($this->afterRoutes[$this->requestedMethod]);
         } // If a route was handled, perform the finish callback (if any)
-        elseif ($callback && is_callable($callback)) {
-            $callback();
+        else {
+            if ($callback && is_callable($callback)) {
+                $callback();
+            }
         }
 
         // If it originally was a HEAD request, clean up after ourselves by emptying the output buffer
@@ -437,6 +443,7 @@ class Router
                 }, $matches, array_keys($matches));
 
                 // Call the handling function with the URL parameters if the desired input is callable
+                $this->lastRoute = $route['fn'];
                 $this->invoke($route['fn'], $params);
 
                 ++$numHandled;
